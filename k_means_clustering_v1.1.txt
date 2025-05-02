@@ -1,0 +1,36 @@
+customers = pd.read_csv('mall_customers.csv')
+
+cols_to_keep = ['Annual Income', 'Spending Score']
+customers = customers[cols_to_keep].copy()
+
+
+def kmeans(df, k, n_iterations=100):
+    variables = df.columns
+
+    centroids, coords = get_centroids(df, k)
+
+    for i in range(n_iterations):
+        last_coords = coords.copy()
+
+        df, dists = calculate_distance(df, coords)
+
+        df['cluster'] = df[dists].idxmin(axis=1).str.split('_').str[-1]
+
+        centroids = round(df.groupby('cluster')[variables].mean(), 4)
+        coords = centroids.values.tolist()
+
+        if last_coords == coords:
+      	    break
+    
+    print(f'Total Iterations: {i + 1}')
+
+    fig, ax = plt.subplots(figsize=(10, 5))
+    sns.scatterplot(x=variables[0], y=variables[1], hue='cluster', palette='tab10', data=df, s=50, ax=ax)
+    sns.scatterplot(x=variables[0], y=variables[1], color='black', data=centroids, s=100, ax=ax)
+
+
+    plt.tight_layout()
+    plt.show()
+
+    return df['cluster']
+clusters = kmeans(customers, 2)
